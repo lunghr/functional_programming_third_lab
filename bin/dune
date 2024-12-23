@@ -1,0 +1,4 @@
+(executable
+ (public_name third_lab)
+ (name main)
+ (libraries interpolation))
