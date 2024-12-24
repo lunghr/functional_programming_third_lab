@@ -110,7 +110,7 @@ let suite =
          "test_linear_interpolation" >:: test_linear_interpolation;
          "test_lagrange_polynomial" >:: test_lagrange_polynomial;
          "test_cut_window" >:: test_cut_window;
-            "test_lagrange_interpolation" >:: test_lagrange_interpolation
+         "test_lagrange_interpolation" >:: test_lagrange_interpolation;
        ]
 
 let () = run_test_tt_main suite
