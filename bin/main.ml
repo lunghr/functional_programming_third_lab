@@ -1,100 +1,87 @@
 open Interpolation
 
-let lagrange_print input =
+type interpolation_type = Linear | Lagrange | All
+
+let print_step interpolation_fun input step =
   input
   |> List.fold_left (fun acc str -> parse_point str acc) []
-  |> sort_points
-  |> fun points ->
-  Printf.printf "Lagrange Interpolation: \n";
-  lagrange_interpolation points 1. |> print_interpolation_result
+  |> is_sorted
+  |> fun points -> interpolation_fun points step |> print_interpolation_result
 
-let lagrange () =
-  Printf.printf "Enter 4 points for Lagrange Interpolation: \n";
-  let rec collect_first_four_points acc =
+let collect_points prompt n =
+  Printf.printf "%s\n" prompt;
+  let rec collect acc =
     match List.length acc with
-    | 4 -> acc
+    | l when l = n -> acc
     | _ -> (
-        match read_line () with
-        | "exit" -> exit 0
-        | p -> collect_first_four_points (p :: acc))
+        match read_line () with "exit" -> exit 0 | p -> collect (p :: acc))
   in
-  collect_first_four_points []
-  |> fun points ->
-  lagrange_print points;
-  let rec collect_next_point points =
-    Printf.printf "Enter next point for Lagrange Interpolation: \n";
-    match read_line () with
-    | "exit" -> exit 0
-    | p ->
-        cut_window (p :: points)
-        |> lagrange_print
-        |> fun _ -> collect_next_point (p :: points)
+  collect []
+
+let linear points step =
+  Printf.printf "Linear interpolation:\n";
+  print_step linear_interpolation
+    [ List.hd points; List.hd (List.tl points) ]
+    step
+
+let lagrange points step =
+  cut_window points
+  |> List.rev
+  |> fun input ->
+  Printf.printf "Lagrange interpolation:\n";
+  print_step lagrange_interpolation input step
+
+let interpolate interpolation_fun step =
+  let points =
+    match interpolation_fun with
+    | Lagrange -> collect_points "Enter 4 points for Interpolation:" 4
+    | Linear -> collect_points "Enter 2 points for Linear Interpolation:" 2
+    | All -> collect_points "Enter 2 points for Interpolation:" 2
   in
-  collect_next_point points
+  if Lagrange = interpolation_fun then
+    lagrange points step
+  else
+    linear points step;
 
-let linear_print input =
-  input
-  |> List.fold_left (fun acc str -> parse_point str acc) []
-  |> sort_points
-  |> fun points ->
-  Printf.printf "Linear Interpolation: \n";
-  linear_interpolation points 1. |> print_interpolation_result
-
-let rec linear = function
-  | [] -> (
-      Printf.printf "Enter 2 points for Linear Interpolation: \n";
-      match read_line () with
-      | "exit" -> exit 0
-      | p1 ->
-          read_line ()
-          |> fun p2 ->
-          linear_print [ p1; p2 ];
-          linear [ p2 ])
-  | p1 :: _ -> (
-      Printf.printf "Enter next point for Linear Interpolation: \n";
-      match read_line () with
-      | "exit" -> exit 0
-      | p2 ->
-          linear_print [ p1; p2 ];
-          linear [ p2 ])
-
-let all () =
-  Printf.printf "Enter 2 points: \n";
-  let rec collect_first_two_points acc =
-    match List.length acc with
-    | 2 -> acc
-    | _ -> (
-        match read_line () with
-        | "exit" -> exit 0
-        | p -> collect_first_two_points (p :: acc))
-  in
-  collect_first_two_points []
-  |> fun points ->
-  linear_print points;
-  lagrange_print points;
   let rec collect_next_point points =
     Printf.printf "Enter next point: \n";
     match read_line () with
     | "exit" -> exit 0
     | p -> (
-        match List.length (p :: points) with
-        | 4 ->
-            linear_print [ List.hd points; p ];
-            cut_window (p :: points) |> lagrange_print;
-            collect_next_point (p :: points)
+        let n_points = p :: points in
+        Printf.printf "Length of points: %d\n" (List.length n_points);
+        match List.length n_points with
+        | n when n >= 4 -> (
+            match interpolation_fun with
+            | Lagrange ->
+                lagrange n_points step;
+                collect_next_point n_points
+            | All ->
+                linear n_points step;
+                lagrange n_points step;
+                collect_next_point n_points
+            | _ ->
+                linear n_points step;
+                collect_next_point n_points)
         | _ ->
-            linear_print [ List.hd points; p ];
-            collect_next_point (p :: points))
+            linear n_points step;
+            collect_next_point n_points)
   in
-
   collect_next_point points
+
+let rec enter_step () =
+  Printf.printf "Enter interpolation step (float number): \n";
+  try read_line () |> float_of_string with _ -> enter_step ()
 
 let rec intro () =
   Printf.printf "Choose interpolation method (linear, lagrange, all): \n";
-  match read_line () with
-  | "lagrange" -> lagrange ()
-  | "linear" -> linear []
-  | "all" -> all ()
-  | _ -> intro ()
+  let interpolation = read_line () in
+  match interpolation with
+  | "lagrange" -> interpolate Lagrange (enter_step ())
+  | "linear" -> interpolate Linear (enter_step ())
+  | "all" -> interpolate All (enter_step ())
+  | _ ->
+      Printf.printf "Invalid interpolation method. Try again \n";
+      intro ()
 
 let () = intro ()

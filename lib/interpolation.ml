@@ -23,7 +23,12 @@ let parse_point str acc =
   | _ -> acc
 
 let is_sorted points =
-  List.for_all2 (fun p1 p2 -> p1.x <= p2.x) (points |> List.rev |> List.tl |> List.rev) (List.tl points)
+  List.for_all2
+    (fun p1 p2 ->
+      (*      Printf.printf "p1.x = %f, p2.x = %f\n" p1.x p2.x; *)
+      p1.x <= p2.x)
+    (points |> List.rev |> List.tl |> List.rev)
+    (List.tl points)
   |> fun res ->
   match res with true -> points | false -> failwith "Points are not sorted"
 
@@ -75,3 +80,5 @@ let cut_window points =
     | _ :: t -> take acc t
   in
   take [] points
+
+let all = [ linear_interpolation; lagrange_interpolation ]
