@@ -20,7 +20,7 @@ let parse_point str acc =
       match (parse_float x, parse_float y) with
       | Some x, Some y -> { x; y } :: acc
       | _ -> acc)
-  | _ -> acc
+  | _ -> failwith "Invalid data format for point"
 
 let is_sorted points =
   List.for_all2
