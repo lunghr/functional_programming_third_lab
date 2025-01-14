@@ -1,87 +1,88 @@
+open Printf
 open Interpolation
 
-type interpolation_type = Linear | Lagrange | All
+type interpolation_type = {
+  name : string;
+  required_points : int;
+  interpolate : point list -> float -> point list;
+}
 
-let print_step interpolation_fun input step =
-  input
-  |> List.fold_left (fun acc str -> parse_point str acc) []
+let interpolation_methods =
+  [
+    { name = "linear"; required_points = 2; interpolate = linear_interpolation };
+    {
+      name = "lagrange";
+      required_points = 4;
+      interpolate = lagrange_interpolation;
+    };
+  ]
+
+let parse_point line =
+  match
+    String.split_on_char ' ' (String.trim line) |> List.map float_of_string_opt
+  with
+  | [ Some x; Some y ] -> Some { x; y }
+  | _ -> None
+
+let print_step interpolation input step =
+  Printf.printf "%s interpolation:\n" interpolation.name;
+  cut_window input
   |> is_sorted
-  |> fun points -> interpolation_fun points step |> print_interpolation_result
+  |> fun points ->
+  interpolation.interpolate points step |> print_interpolation_result
 
-let collect_points prompt n =
-  Printf.printf "%s\n" prompt;
-  let rec collect acc =
+let input_points n =
+  let rec loop acc =
     match List.length acc with
-    | l when l = n -> acc
+    | a when a = n -> acc
     | _ -> (
-        match read_line () with "exit" -> exit 0 | p -> collect (p :: acc))
+        match read_line () with
+        | "exit" -> exit 0
+        | line -> (
+            match parse_point line with
+            | Some point -> loop (point :: acc)
+            | None ->
+                Printf.printf "Invalid point format. Try again (x y):\n";
+                loop acc))
   in
-  collect []
+  loop [] |> List.rev
 
-let linear points step =
-  Printf.printf "Linear interpolation:\n";
-  print_step linear_interpolation
-    [ List.hd points; List.hd (List.tl points) ]
-    step
-
-let lagrange points step =
-  cut_window points
-  |> List.rev
-  |> fun input ->
-  Printf.printf "Lagrange interpolation:\n";
-  print_step lagrange_interpolation input step
-
-let interpolate interpolation_fun step =
-  let points =
-    match interpolation_fun with
-    | Lagrange -> collect_points "Enter 4 points for Interpolation:" 4
-    | Linear -> collect_points "Enter 2 points for Linear Interpolation:" 2
-    | All -> collect_points "Enter 2 points for Interpolation:" 2
-  in
-  if Lagrange = interpolation_fun then
-    lagrange points step
-  else
-    linear points step;
+let interpolate interpolation step =
+  Printf.printf "Enter %d points for Interpolation:\n"
+    interpolation.required_points;
+  let points = input_points interpolation.required_points in
+  print_step interpolation points step;
 
   let rec collect_next_point points =
     Printf.printf "Enter next point: \n";
-    match read_line () with
-    | "exit" -> exit 0
-    | p -> (
-        let n_points = p :: points in
-        Printf.printf "Length of points: %d\n" (List.length n_points);
-        match List.length n_points with
-        | n when n >= 4 -> (
-            match interpolation_fun with
-            | Lagrange ->
-                lagrange n_points step;
-                collect_next_point n_points
-            | All ->
-                linear n_points step;
-                lagrange n_points step;
-                collect_next_point n_points
-            | _ ->
-                linear n_points step;
-                collect_next_point n_points)
-        | _ ->
-            linear n_points step;
-            collect_next_point n_points)
+    let p = input_points 1 in
+    let n_points = points @ p in
+    print_step interpolation n_points step;
+    collect_next_point n_points
   in
   collect_next_point points
 
-let rec enter_step () =
-  Printf.printf "Enter interpolation step (float number): \n";
-  try read_line () |> float_of_string with _ -> enter_step ()
-
-let rec intro () =
-  Printf.printf "Choose interpolation method (linear, lagrange, all): \n";
-  let interpolation = read_line () in
-  match interpolation with
-  | "lagrange" -> interpolate Lagrange (enter_step ())
-  | "linear" -> interpolate Linear (enter_step ())
-  | "all" -> interpolate All (enter_step ())
+let rec interpolation_choice () =
+  Printf.printf "Choose interpolation method (linear, lagrange, all):\n";
+  match read_line () with
+  | "lagrange" -> List.nth interpolation_methods 1
+  | "linear" -> List.nth interpolation_methods 0
+  | "all" -> List.nth interpolation_methods 0
   | _ ->
-      Printf.printf "Invalid interpolation method. Try again \n";
-      intro ()
+      Printf.printf "Invalid choice. Try again.\n";
+      interpolation_choice ()
 
-let () = intro ()
+let rec enter_step () =
+  printf "Enter interpolation step (float number):\n";
+  match read_line () |> float_of_string_opt with
+  | Some step when step > 0.0 -> step
+  | _ ->
+      printf "Invalid step. Try again.\n";
+      enter_step ()
+
+let main () =
+  let interpolation = interpolation_choice () in
+  let step = enter_step () in
+  interpolate interpolation step
+
+let () = main ()

@@ -33,16 +33,6 @@ let test_is_sorted _ =
   assert_raises (Failure "Points are not sorted") (fun () ->
       is_sorted points_unsorted)
 
-let test_parse_point _ =
-  assert_equal [ { x = 0.; y = 0. } ] (parse_point "0. 0." []);
-  assert_equal [ { x = 1.57; y = 1. } ] (parse_point "1.57 1." []);
-  assert_raises (Failure "Invalid data format for point") (fun () ->
-      parse_point "0.9" []);
-  assert_raises (Failure "Invalid data format for point") (fun () ->
-      parse_point "0. 0. 0." []);
-  assert_raises (Failure "Invalid data format for point") (fun () ->
-      parse_point "error" [])
-
 let test_linear_interpolation _ =
   assert_equal
     [
@@ -50,11 +40,7 @@ let test_linear_interpolation _ =
       { x = 1.; y = 0.636942675159235638 };
       { x = 0.; y = 0. };
     ]
-    (linear_interpolation two_points 1.);
-  assert_raises (Failure "Invalid data format for interpolation") (fun () ->
-      linear_interpolation points 1.);
-  assert_raises (Failure "Invalid data format for interpolation") (fun () ->
-      linear_interpolation points_unsorted 1.)
+    (linear_interpolation two_points 1.)
 
 let test_lagrange_polynomial _ =
   assert_equal 0. (lagrange_polynomial points 0.);
@@ -70,8 +56,8 @@ let test_cut_window _ =
       { x = 4.712; y = -1. };
       { x = 12.568; y = 0. };
     ]
-    (cut_window (List.rev points_long));
-  assert_equal points (cut_window (List.rev points))
+    (cut_window points_long);
+  assert_equal points (cut_window points)
 
 let test_lagrange_interpolation _ =
   assert_equal
@@ -106,7 +92,6 @@ let suite =
   "suite"
   >::: [
          "test_is_sorted" >:: test_is_sorted;
-         "test_parse_point" >:: test_parse_point;
          "test_linear_interpolation" >:: test_linear_interpolation;
          "test_lagrange_polynomial" >:: test_lagrange_polynomial;
          "test_cut_window" >:: test_cut_window;

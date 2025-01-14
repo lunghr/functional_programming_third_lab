@@ -12,16 +12,6 @@ let print_interpolation_result points =
   Printf.printf "\n";
   Printf.printf "\n"
 
-let parse_float str = try Some (float_of_string str) with Failure _ -> None
-
-let parse_point str acc =
-  match String.split_on_char ' ' str with
-  | [ x; y ] -> (
-      match (parse_float x, parse_float y) with
-      | Some x, Some y -> { x; y } :: acc
-      | _ -> acc)
-  | _ -> failwith "Invalid data format for point"
-
 let is_sorted points =
   List.for_all2
     (fun p1 p2 ->
@@ -33,10 +23,11 @@ let is_sorted points =
   match res with true -> points | false -> failwith "Points are not sorted"
 
 let linear_interpolation points step =
+  let points = List.rev points in
   match points with
-  | [ p1; p2 ] ->
-      let x1 = p1.x and y1 = p1.y in
-      let x2 = p2.x and y2 = p2.y in
+  | p1 :: p2 :: _ ->
+      let x1 = p2.x and y1 = p2.y in
+      let x2 = p1.x and y2 = p1.y in
       let rec generate_sequence x acc =
         match x with
         | x when x >= x2 +. step -> acc
@@ -79,6 +70,6 @@ let cut_window points =
     | h :: t when List.length acc < 4 -> take (h :: acc) t
     | _ :: t -> take acc t
   in
-  take [] points
+  take [] (List.rev points)
 
 let all = [ linear_interpolation; lagrange_interpolation ]
