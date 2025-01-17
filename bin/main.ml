@@ -4,16 +4,25 @@ open Interpolation
 type interpolation_type = {
   name : string;
   required_points : int;
-  interpolate : point list -> float -> point list;
+  interpolate : (point list -> float -> point list) list;
 }
 
 let interpolation_methods =
   [
-    { name = "linear"; required_points = 2; interpolate = linear_interpolation };
+    {
+      name = "linear";
+      required_points = 2;
+      interpolate = [ linear_interpolation ];
+    };
     {
       name = "lagrange";
       required_points = 4;
-      interpolate = lagrange_interpolation;
+      interpolate = [ lagrange_interpolation ];
+    };
+    {
+      name = "all";
+      required_points = 2;
+      interpolate = [ linear_interpolation; lagrange_interpolation ];
     };
   ]
 
@@ -24,12 +33,13 @@ let parse_point line =
   | [ Some x; Some y ] -> Some { x; y }
   | _ -> None
 
-let print_step interpolation input step =
-  Printf.printf "%s interpolation:\n" interpolation.name;
-  cut_window input
-  |> is_sorted
-  |> fun points ->
-  interpolation.interpolate points step |> print_interpolation_result
+let print_step interpolations input step =
+  Printf.printf "%s interpolation:\n" interpolations.name;
+  List.iter (fun interpolation ->
+      cut_window input
+      |> is_sorted
+      |> fun points ->
+      interpolation points step |> print_interpolation_result) interpolations.interpolate
 
 let input_points n =
   let rec loop acc =
@@ -67,7 +77,7 @@ let rec interpolation_choice () =
   match read_line () with
   | "lagrange" -> List.nth interpolation_methods 1
   | "linear" -> List.nth interpolation_methods 0
-  | "all" -> List.nth interpolation_methods 0
+  | "all" -> List.nth interpolation_methods 2
   | _ ->
       Printf.printf "Invalid choice. Try again.\n";
       interpolation_choice ()

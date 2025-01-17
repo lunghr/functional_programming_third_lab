@@ -1,16 +1,19 @@
 type point = { x : float; y : float }
 
 let print_interpolation_result points =
-  points
-  |> List.fold_left
-       (fun (xs, ys) point -> (point.x :: xs, point.y :: ys))
-       ([], [])
-  |> fun (x_values, y_values) ->
-  List.iter (Printf.printf "%.2f\t") x_values;
-  Printf.printf "\n";
-  List.iter (Printf.printf "%.2f\t") y_values;
-  Printf.printf "\n";
-  Printf.printf "\n"
+  if List.length points = 0 then
+    Printf.printf ""
+  else
+    points
+    |> List.fold_left
+         (fun (xs, ys) point -> (point.x :: xs, point.y :: ys))
+         ([], [])
+    |> fun (x_values, y_values) ->
+    List.iter (Printf.printf "%.2f\t") x_values;
+    Printf.printf "\n";
+    List.iter (Printf.printf "%.2f\t") y_values;
+    Printf.printf "\n";
+    Printf.printf "\n"
 
 let is_sorted points =
   List.for_all2
@@ -53,15 +56,18 @@ let lagrange_polynomial points x =
     0. points
 
 let lagrange_interpolation points step =
-  let limit =
-    ((List.hd (List.rev points)).x -. (List.hd points).x) /. step
-    |> ceil
-    |> int_of_float
-  in
-  List.init (limit + 1) (fun i ->
-      (List.hd points).x +. (float_of_int i *. step))
-  |> List.map (fun x -> { x; y = lagrange_polynomial points x })
-  |> List.rev
+  if List.length points < 4 then
+    []
+  else
+    let limit =
+      ((List.hd (List.rev points)).x -. (List.hd points).x) /. step
+      |> ceil
+      |> int_of_float
+    in
+    List.init (limit + 1) (fun i ->
+        (List.hd points).x +. (float_of_int i *. step))
+    |> List.map (fun x -> { x; y = lagrange_polynomial points x })
+    |> List.rev
 
 let cut_window points =
   let rec take acc lst =
