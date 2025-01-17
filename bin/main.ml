@@ -35,11 +35,12 @@ let parse_point line =
 
 let print_step interpolations input step =
   Printf.printf "%s interpolation:\n" interpolations.name;
-  List.iter (fun interpolation ->
+  List.iter
+    (fun interpolation ->
       cut_window input
       |> is_sorted
-      |> fun points ->
-      interpolation points step |> print_interpolation_result) interpolations.interpolate
+      |> fun points -> interpolation points step |> print_interpolation_result)
+    interpolations.interpolate
 
 let input_points n =
   let rec loop acc =
