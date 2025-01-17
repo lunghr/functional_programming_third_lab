@@ -17,9 +17,7 @@ let print_interpolation_result points =
 
 let is_sorted points =
   List.for_all2
-    (fun p1 p2 ->
-      (*      Printf.printf "p1.x = %f, p2.x = %f\n" p1.x p2.x; *)
-      p1.x <= p2.x)
+    (fun p1 p2 -> p1.x <= p2.x)
     (points |> List.rev |> List.tl |> List.rev)
     (List.tl points)
   |> fun res ->
@@ -35,7 +33,6 @@ let linear_interpolation points step =
         match x with
         | x when x >= x2 +. step -> acc
         | _ ->
-            (*            Printf.printf "x = %f\n" x; *)
             generate_sequence (x +. step)
               ({ x; y = y1 +. ((y2 -. y1) *. (x -. x1) /. (x2 -. x1)) } :: acc)
       in
@@ -78,4 +75,27 @@ let cut_window points =
   in
   take [] (List.rev points)
 
-let all = [ linear_interpolation; lagrange_interpolation ]
+type interpolation_type = {
+  name : string;
+  required_points : int;
+  interpolate : (point list -> float -> point list) list;
+}
+
+let interpolation_methods =
+  [
+    {
+      name = "linear";
+      required_points = 2;
+      interpolate = [ linear_interpolation ];
+    };
+    {
+      name = "lagrange";
+      required_points = 4;
+      interpolate = [ lagrange_interpolation ];
+    };
+    {
+      name = "all";
+      required_points = 2;
+      interpolate = [ linear_interpolation; lagrange_interpolation ];
+    };
+  ]

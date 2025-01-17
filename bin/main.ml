@@ -1,31 +1,6 @@
 open Printf
 open Interpolation
 
-type interpolation_type = {
-  name : string;
-  required_points : int;
-  interpolate : (point list -> float -> point list) list;
-}
-
-let interpolation_methods =
-  [
-    {
-      name = "linear";
-      required_points = 2;
-      interpolate = [ linear_interpolation ];
-    };
-    {
-      name = "lagrange";
-      required_points = 4;
-      interpolate = [ lagrange_interpolation ];
-    };
-    {
-      name = "all";
-      required_points = 2;
-      interpolate = [ linear_interpolation; lagrange_interpolation ];
-    };
-  ]
-
 let parse_point line =
   match
     String.split_on_char ' ' (String.trim line) |> List.map float_of_string_opt

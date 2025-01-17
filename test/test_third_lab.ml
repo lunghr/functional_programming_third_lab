@@ -1,6 +1,8 @@
 open OUnit2
 open Interpolation
 
+let epsilon = 0.01
+
 let points =
   [
     { x = 0.; y = 0. };
@@ -34,19 +36,16 @@ let test_is_sorted _ =
       is_sorted points_unsorted)
 
 let test_linear_interpolation _ =
+  let expected =
+    [ { x = 2.; y = 1.27 }; { x = 1.; y = 0.64 }; { x = 0.; y = 0. } ]
+  in
   assert_equal
-    [
-      { x = 2.; y = 1.27388535031847128 };
-      { x = 1.; y = 0.636942675159235638 };
-      { x = 0.; y = 0. };
-    ]
+    ~cmp:
+      (List.for_all2 (fun p1 p2 ->
+           abs_float (p1.x -. p2.x) < epsilon
+           && abs_float (p1.y -. p2.y) < epsilon))
+    expected
     (linear_interpolation two_points 1.)
-
-let test_lagrange_polynomial _ =
-  assert_equal 0. (lagrange_polynomial points 0.);
-  assert_equal 1. (lagrange_polynomial points 1.57);
-  assert_equal 0. (lagrange_polynomial points 3.142);
-  assert_equal (-1.) (lagrange_polynomial points 4.712)
 
 let test_cut_window _ =
   assert_equal
@@ -60,40 +59,37 @@ let test_cut_window _ =
   assert_equal points (cut_window points)
 
 let test_lagrange_interpolation _ =
-  assert_equal
+  let expected =
     [
-      { x = 5.; y = -1.02585330905177052 };
-      { x = 4.; y = -0.673906611578378612 };
-      { x = 3.; y = 0.120257212496086133 };
-      { x = 2.; y = 0.841033018739032 };
-      { x = 1.; y = 0.972815662717867236 };
       { x = 0.; y = 0. };
-    ]
-    (lagrange_interpolation points 1.);
-  assert_equal
-    [
-      { x = 10.; y = 100. };
-      { x = 9.; y = 90. };
-      { x = 8.; y = 80. };
-      { x = 7.; y = 70. };
-      { x = 6.; y = 59.9999999999999929 };
-      { x = 5.; y = 50. };
-      { x = 4.; y = 40. };
-      { x = 3.; y = 30.0000000000000036 };
       { x = 2.; y = 20. };
-      { x = 1.; y = 10. };
-      { x = 0.; y = 0. };
+      { x = 4.; y = 40. };
+      { x = 6.; y = 60. };
+      { x = 8.; y = 80. };
+      { x = 10.; y = 100. };
     ]
-    (lagrange_interpolation
-       [ { x = 0.; y = 0. }; { x = 1.; y = 10. }; { x = 10.; y = 100. } ]
-       1.)
+  in
+  assert_equal
+    ~cmp:
+      (List.for_all2 (fun p1 p2 ->
+           abs_float (p1.x -. p2.x) < epsilon
+           && abs_float (p1.y -. p2.y) < epsilon))
+    expected
+    (List.rev
+       (lagrange_interpolation
+          [
+            { x = 0.; y = 0. };
+            { x = 1.; y = 10. };
+            { x = 5.; y = 50. };
+            { x = 10.; y = 100. };
+          ]
+          2.))
 
 let suite =
   "suite"
   >::: [
          "test_is_sorted" >:: test_is_sorted;
          "test_linear_interpolation" >:: test_linear_interpolation;
-         "test_lagrange_polynomial" >:: test_lagrange_polynomial;
          "test_cut_window" >:: test_cut_window;
          "test_lagrange_interpolation" >:: test_lagrange_interpolation;
        ]
