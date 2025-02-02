@@ -1,8 +1,10 @@
 type point = { x : float; y : float }
 
 let print_interpolation_result points =
-  if List.length points = 0 then
-    Printf.printf ""
+  if List.length points < 2 then
+    Printf.printf
+      "Step is too big for this interpolation diapason, enter more points, \
+       please\n"
   else
     points
     |> List.fold_left
@@ -23,21 +25,61 @@ let is_sorted points =
   |> fun res ->
   match res with true -> points | false -> failwith "Points are not sorted"
 
+let get_linear_interpolated_sequence x1 y1 x2 y2 step =
+  let rec generate_sequence x acc =
+    match x with
+    | x when x > x2 -> acc
+    | _ ->
+        generate_sequence (x +. step)
+          ({ x; y = y1 +. ((y2 -. y1) *. (x -. x1) /. (x2 -. x1)) } :: acc)
+  in
+  generate_sequence x1 []
+
 let linear_interpolation points step =
   let points = List.rev points in
   match points with
   | p1 :: p2 :: _ ->
       let x1 = p2.x and y1 = p2.y in
       let x2 = p1.x and y2 = p1.y in
-      let rec generate_sequence x acc =
-        match x with
-        | x when x >= x2 +. step -> acc
-        | _ ->
-            generate_sequence (x +. step)
-              ({ x; y = y1 +. ((y2 -. y1) *. (x -. x1) /. (x2 -. x1)) } :: acc)
-      in
-      generate_sequence x1 []
+      get_linear_interpolated_sequence x1 y1 x2 y2 step
   | _ -> failwith "Invalid data format for interpolation"
+
+(* let linear_interpolation points step = *)
+(*  let points = List.rev points in *)
+(*  match points with *)
+(*  | [ p1; p2 ] -> ( *)
+(*      let x1 = p2.x and y1 = p2.y in *)
+(*      let x2 = p1.x and y2 = p1.y in *)
+(*      match x2 -. x1 >= step with *)
+(*      | false -> *)
+(*          Printf.printf *)
+(* "Step is too big for this interpolation diapason, enter more \ *)
+   (*             points, please\n"; *)
+(*          [] *)
+(*      | true -> get_linear_interpolated_sequence x1 y1 x2 y2 step) *)
+(*  | p1 :: p2 :: p3 :: _ -> ( *)
+(*      let x1 = p3.x and y1 = p3.y in *)
+(*      let x2 = p2.x and y2 = p2.y in *)
+(*      let x3 = p1.x and y3 = p1.y in *)
+(*      match x2 -. x1 >= step with *)
+(*      | false -> ( *)
+(*          match x3 -. x1 >= step with *)
+(*          | false -> *)
+(*              Printf.printf *)
+(* "Step is too big for this interpolation diapason, enter more \ *)
+   (*                 points, please\n"; *)
+(*              [] *)
+(*          | true -> *)
+(*              let res1 = get_linear_interpolated_sequence x1 y1 x2 y2 step in *)
+(*              let last_point = List.hd res1 in *)
+(*              let res2 = *)
+(*                get_linear_interpolated_sequence last_point.x last_point.y x3 y3 *)
+(*                  step *)
+(* (*                  incorrect merge btw*) *)
+(*              in *)
+(*              res2 @ res1) *)
+(*      | true -> get_linear_interpolated_sequence x1 y1 x2 y2 step) *)
+(*  | _ -> failwith "Invalid data format for interpolation" *)
 
 let lagrange_polynomial points x =
   List.fold_left
@@ -62,8 +104,12 @@ let lagrange_interpolation points step =
       |> int_of_float
     in
     List.init (limit + 1) (fun i ->
-        (List.hd points).x +. (float_of_int i *. step))
-    |> List.map (fun x -> { x; y = lagrange_polynomial points x })
+        let x = (List.hd points).x +. (float_of_int i *. step) in
+        if x <= (List.hd (List.rev points)).x then
+          Some { x; y = lagrange_polynomial points x }
+        else
+          None)
+    |> List.filter_map (fun x -> x)
     |> List.rev
 
 let cut_window points =

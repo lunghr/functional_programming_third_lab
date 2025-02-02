@@ -1,4 +1,3 @@
-open Printf
 open Interpolation
 
 let parse_point line =
@@ -48,27 +47,29 @@ let interpolate interpolation step =
   in
   collect_next_point points
 
-let rec interpolation_choice () =
-  Printf.printf "Choose interpolation method (linear, lagrange, all):\n";
-  match read_line () with
+let interpolation_choice method_name =
+  match method_name with
   | "lagrange" -> List.nth interpolation_methods 1
   | "linear" -> List.nth interpolation_methods 0
   | "all" -> List.nth interpolation_methods 2
   | _ ->
-      Printf.printf "Invalid choice. Try again.\n";
-      interpolation_choice ()
+      failwith "Invalid interpolation method. Choose: linear, lagrange, or all."
 
-let rec enter_step () =
-  printf "Enter interpolation step (float number):\n";
-  match read_line () |> float_of_string_opt with
+let get_step step_str =
+  match float_of_string_opt step_str with
   | Some step when step > 0.0 -> step
-  | _ ->
-      printf "Invalid step. Try again.\n";
-      enter_step ()
+  | _ -> failwith "Invalid step. Step must be a positive float number."
 
 let main () =
-  let interpolation = interpolation_choice () in
-  let step = enter_step () in
-  interpolate interpolation step
+  let args = Array.to_list Sys.argv |> List.tl in
+  match args with
+  | [ method_name; step_str ] ->
+      let interpolation = interpolation_choice method_name in
+      let step = get_step step_str in
+      interpolate interpolation step
+  | _ ->
+      failwith
+        "Usage: dune exec _build/default/bin/main.exe -- \
+         <interpolation_method> <step>"
 
 let () = main ()

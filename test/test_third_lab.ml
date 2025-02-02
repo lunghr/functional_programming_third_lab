@@ -36,9 +36,7 @@ let test_is_sorted _ =
       is_sorted points_unsorted)
 
 let test_linear_interpolation _ =
-  let expected =
-    [ { x = 2.; y = 1.27 }; { x = 1.; y = 0.64 }; { x = 0.; y = 0. } ]
-  in
+  let expected = [ { x = 1.; y = 0.64 }; { x = 0.; y = 0. } ] in
   assert_equal
     ~cmp:
       (List.for_all2 (fun p1 p2 ->
