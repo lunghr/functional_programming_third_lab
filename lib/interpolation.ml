@@ -2,9 +2,12 @@ type point = { x : float; y : float }
 
 let print_interpolation_result points =
   if List.length points < 2 then
-    Printf.printf
-      "Step is too big for this interpolation diapason, enter more points, \
-       please\n"
+    match List.length points with
+    | len when len > 0 ->
+        Printf.printf
+          "Step is too big for this interpolation diapason, enter more points, \
+           please\n"
+    | _ -> ()
   else
     points
     |> List.fold_left
